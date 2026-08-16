@@ -22,6 +22,22 @@ class TSConfigProxySettingsDefaultsTests(SimpleTestCase):
     def test_channel_client_wait_period_default(self, _mock_settings):
         self.assertEqual(TSConfig.get_channel_client_wait_period(), 5)
 
+    @patch.object(TSConfig, "get_proxy_settings", return_value={})
+    def test_initial_behind_chunks_default(self, _mock_settings):
+        self.assertEqual(TSConfig.get_initial_behind_chunks(), 4)
+
+    @patch.object(
+        TSConfig, "get_proxy_settings", return_value={"initial_behind_chunks": 1}
+    )
+    def test_initial_behind_chunks_override(self, _mock_settings):
+        self.assertEqual(TSConfig.get_initial_behind_chunks(), 1)
+
+    @patch.object(
+        TSConfig, "get_proxy_settings", return_value={"initial_behind_chunks": "bad"}
+    )
+    def test_initial_behind_chunks_invalid_falls_back(self, _mock_settings):
+        self.assertEqual(TSConfig.get_initial_behind_chunks(), 4)
+
     @patch.object(
         TSConfig,
         "get_proxy_settings",
@@ -66,6 +82,32 @@ class ProxySettingsSerializerTests(SimpleTestCase):
         )
         self.assertFalse(serializer.is_valid())
         self.assertIn("channel_init_grace_period", serializer.errors)
+
+    def test_initial_behind_chunks_defaults_when_omitted(self):
+        serializer = ProxySettingsSerializer(data=self._valid_payload())
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertEqual(serializer.validated_data["initial_behind_chunks"], 4)
+
+    def test_initial_behind_chunks_accepts_valid_range(self):
+        serializer = ProxySettingsSerializer(
+            data=self._valid_payload(initial_behind_chunks=1)
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertEqual(serializer.validated_data["initial_behind_chunks"], 1)
+
+    def test_initial_behind_chunks_rejects_zero(self):
+        serializer = ProxySettingsSerializer(
+            data=self._valid_payload(initial_behind_chunks=0)
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("initial_behind_chunks", serializer.errors)
+
+    def test_initial_behind_chunks_rejects_above_48(self):
+        serializer = ProxySettingsSerializer(
+            data=self._valid_payload(initial_behind_chunks=49)
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("initial_behind_chunks", serializer.errors)
 
 
 class CoreSettingsProxyDefaultsTests(TestCase):

@@ -26,6 +26,7 @@ const isNumericField = (key) => {
     'channel_init_grace_period',
     'channel_client_wait_period',
     'new_client_behind_seconds',
+    'initial_behind_chunks',
   ].includes(key);
 };
 
@@ -37,8 +38,13 @@ const getNumericFieldMax = (key) => {
   if (key === 'channel_shutdown_delay') return 300;
   if (key === 'channel_client_wait_period') return 300;
   if (key === 'new_client_behind_seconds') return 120;
+  if (key === 'initial_behind_chunks') return 48;
   return 300;
 };
+
+// Most numeric proxy settings allow 0; the startup buffer needs at least 1
+// chunk, otherwise a channel would try to serve before any data is buffered.
+const getNumericFieldMin = (key) => (key === 'initial_behind_chunks' ? 1 : 0);
 
 const renderProxySettingField = (key, config, proxySettingsForm) => {
   if (isNumericField(key)) {
@@ -48,7 +54,7 @@ const renderProxySettingField = (key, config, proxySettingsForm) => {
         label={config.label}
         {...proxySettingsForm.getInputProps(key)}
         description={config.description || null}
-        min={0}
+        min={getNumericFieldMin(key)}
         max={getNumericFieldMax(key)}
       />
     );

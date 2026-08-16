@@ -63,6 +63,7 @@ describe('ProxySettingsFormUtils', () => {
         channel_init_grace_period: 60,
         channel_client_wait_period: 5,
         new_client_behind_seconds: 5,
+        initial_behind_chunks: 4,
       });
     });
 

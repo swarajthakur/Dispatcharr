@@ -55,6 +55,7 @@ class BaseConfig:
                 "channel_init_grace_period": 60,
                 "channel_client_wait_period": 5,
                 "new_client_behind_seconds": 5,
+                "initial_behind_chunks": 4,
             }
 
         finally:
@@ -153,6 +154,22 @@ class TSConfig(BaseConfig):
         """Seconds to keep a ready channel alive waiting for the first client to connect."""
         settings = cls.get_proxy_settings()
         return settings.get("channel_client_wait_period", 5)
+
+    @classmethod
+    def get_initial_behind_chunks(cls):
+        """Startup buffer threshold (chunks) to fill before a channel serves clients.
+
+        Lower values reduce channel-switch latency (fewer chunks to buffer before
+        the first byte is delivered); higher values add cushion against upstream
+        stalls at the cost of more latency behind live. Falls back to the
+        ``INITIAL_BEHIND_CHUNKS`` class default when unset or invalid.
+        """
+        settings = cls.get_proxy_settings()
+        try:
+            value = int(settings.get("initial_behind_chunks", cls.INITIAL_BEHIND_CHUNKS))
+        except (TypeError, ValueError):
+            return cls.INITIAL_BEHIND_CHUNKS
+        return value if value >= 1 else cls.INITIAL_BEHIND_CHUNKS
 
     # Dynamic property access for these settings
     @property

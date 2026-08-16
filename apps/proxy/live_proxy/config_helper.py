@@ -38,8 +38,12 @@ class ConfigHelper:
 
     @staticmethod
     def initial_behind_chunks():
-        """Get number of chunks to start behind"""
-        return ConfigHelper.get('INITIAL_BEHIND_CHUNKS', 4)
+        """Number of buffer chunks to fill before a channel serves clients.
+
+        Loaded from DB proxy_settings so users can tune channel-switch latency
+        at runtime (lower = faster start, less stall cushion)."""
+        from apps.proxy.config import TSConfig
+        return TSConfig.get_initial_behind_chunks()
 
     @staticmethod
     def new_client_behind_seconds():

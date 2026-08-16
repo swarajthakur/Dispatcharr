@@ -99,6 +99,7 @@ class ProxySettingsSerializer(serializers.Serializer):
     channel_init_grace_period = serializers.IntegerField(min_value=0, max_value=300)
     channel_client_wait_period = serializers.IntegerField(min_value=0, max_value=300, required=False, default=5)
     new_client_behind_seconds = serializers.IntegerField(min_value=0, max_value=120, required=False, default=5)
+    initial_behind_chunks = serializers.IntegerField(min_value=1, max_value=48, required=False, default=4)
 
     def validate_buffering_timeout(self, value):
         if value < 0 or value > 300:
@@ -137,6 +138,11 @@ class ProxySettingsSerializer(serializers.Serializer):
     def validate_new_client_behind_seconds(self, value):
         if value < 0 or value > 120:
             raise serializers.ValidationError("New client buffer must be between 0 and 120 seconds")
+        return value
+
+    def validate_initial_behind_chunks(self, value):
+        if value < 1 or value > 48:
+            raise serializers.ValidationError("Startup buffer must be between 1 and 48 chunks")
         return value
 
 

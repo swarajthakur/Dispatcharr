@@ -69,6 +69,12 @@ export const PROXY_SETTINGS_OPTIONS = {
     description:
       'Seconds of received buffer to start behind live when a new client connects (0 = start at live). Note: this is chunk receive time, not video duration.',
   },
+  initial_behind_chunks: {
+    label: 'Startup Buffer (chunks)',
+    advanced: true,
+    description:
+      'Number of ~256KB chunks a channel must buffer before it starts serving any client. Lower = faster channel switching (fewer chunks to fill first); higher = more cushion against upstream stalls but more latency behind live. Default 4 (~1MB).',
+  },
 };
 
 export const USER_LIMITS_OPTIONS = {
