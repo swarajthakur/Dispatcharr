@@ -63,6 +63,11 @@ if ! [[ "$DISPATCHARR_PORT" =~ ^[0-9]+$ ]]; then
 fi
 sed -i "s/NGINX_PORT/${DISPATCHARR_PORT}/g" /etc/nginx/sites-enabled/default
 
+# Substitute the /vpnstream/ passthrough resolver with the pod's own DNS
+# (first nameserver in /etc/resolv.conf). Falls back to Docker's embedded DNS.
+NGINX_RESOLVER="$(awk '/^nameserver/ && $2 ~ /^[0-9.]+$/ {print $2; exit}' /etc/resolv.conf 2>/dev/null)"
+sed -i "s/NGINX_RESOLVER/${NGINX_RESOLVER:-127.0.0.11}/g" /etc/nginx/sites-enabled/default
+
 # Configure nginx based on IPv6 availability
 if ip -6 addr show | grep -q "inet6"; then
     echo "✅ IPv6 is available, enabling IPv6 in nginx"
