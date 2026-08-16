@@ -420,11 +420,24 @@ def stream_ts(request, channel_id, user=None, force_output_format=None):
                             get_stream_info_for_switch,
                         )
 
-                        # Try initial URL
-                        logger.info(f"[{client_id}] Validating redirect URL: {stream_url}")
-                        is_valid, final_url, status_code, message = validate_stream_url(
-                            stream_url, user_agent=stream_user_agent, timeout=(5, 5)
-                        )
+                        # Our own /vpnstream/ passthrough cannot be preflighted from
+                        # here: the pod resolves cluster DNS, not the external hostname
+                        # in the redirect, so validate_stream_url() always fails with a
+                        # NameResolutionError. We control that endpoint anyway, so skip
+                        # the preflight (also saves a round-trip → faster zap).
+                        if "/vpnstream/" in stream_url:
+                            logger.info(
+                                f"[{client_id}] Passthrough redirect, skipping validation: {stream_url}"
+                            )
+                            is_valid, final_url, status_code, message = (
+                                True, stream_url, 200, "passthrough (validation skipped)"
+                            )
+                        else:
+                            # Try initial URL
+                            logger.info(f"[{client_id}] Validating redirect URL: {stream_url}")
+                            is_valid, final_url, status_code, message = validate_stream_url(
+                                stream_url, user_agent=stream_user_agent, timeout=(5, 5)
+                            )
 
                         # If first URL doesn't validate, try alternates
                         if not is_valid:
