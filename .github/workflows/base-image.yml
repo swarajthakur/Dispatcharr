@@ -21,6 +21,11 @@ permissions:
 
 jobs:
   prepare:
+    # Upstream only: this publishes the base image to GHCR and Docker Hub, and a
+    # fork has no Docker Hub secrets, so every push failed at the login step.
+    # Forks build against upstream's published base image instead (see
+    # docker/Dockerfile's REPO_OWNER default and backend-tests.yml).
+    if: ${{ github.repository == 'Dispatcharr/Dispatcharr' }}
     runs-on: ubuntu-24.04
     outputs:
       repo_owner: ${{ steps.meta.outputs.repo_owner }}
@@ -63,6 +68,7 @@ jobs:
 
   docker:
     needs: [prepare]
+    if: ${{ github.repository == 'Dispatcharr/Dispatcharr' }}
     strategy:
       fail-fast: false
       matrix:
@@ -146,7 +152,7 @@ jobs:
   create-manifest:
     needs: [prepare, docker]
     runs-on: ubuntu-24.04
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.repository == 'Dispatcharr/Dispatcharr' && github.event_name != 'pull_request' }}
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
